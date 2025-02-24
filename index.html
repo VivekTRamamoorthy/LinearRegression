@@ -12,6 +12,7 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/contrib/auto-render.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css">
+    <link rel="stylesheet" href="style.css">
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             renderMathInElement(document.body);
@@ -22,23 +23,31 @@
     <h2>Simple Linear Regression Demo</h2>
     <canvas id="plot" width="500" height="400"></canvas>
     <div class="controls">
-        <label>Slope (m): <input type="range" id="slope" min="-2" max="2" step="0.01" value="1"></label>
-        <label>Intercept (b): <input type="range" id="intercept" min="-100" max="100" step="1" value="0"></label>
+        <label>Slope (m): <input type="range" id="slope" min="-2" max="2" step="0.01" value="0"></label>
+        <label>Intercept (b): <input type="range" id="intercept" min="-100" max="100" step="1" value="100"></label>
     </div>
     <p>Mean Squared Error: <span id="mse">0</span></p>
     <button onclick="generatePoints()">Regenerate Points</button>
     <h3>Finding Optimal Slope & Intercept</h3>
     <p>The optimal slope (m) and intercept (b) can be found using the normal equation:</p>
-    <p>In matrix form, the linear regression model is:</p>
-    <p>\[ Y = X B + \varepsilon \]</p>
-    <p>Where:</p>
-    <ul>
-        <li>\( Y \) is the vector of observed values</li>
-        <li>\( X \) is the design matrix with a column of ones for the intercept and a column for the predictor variable</li>
-        <li>\( B \) is the vector of parameters (intercept and slope)</li>
-        <li>\( \varepsilon \) is the error term</li>
-    </ul>
-    <p>The least squares solution is obtained by solving:</p>
+    <h4>Derivation of the Normal Equation</h4>
+    <p>We minimize the mean squared error:</p>
+    <p>\[ J(m, b) = \sum_{i=1}^{n} (y_i - (m x_i + b))^2 \]</p>
+    <p>Taking partial derivatives and setting them to zero:</p>
+    <p>\[ \frac{\partial J}{\partial m} = -2 \sum x_i (y_i - (m x_i + b)) = 0 \]</p>
+    <p>\[ \frac{\partial J}{\partial b} = -2 \sum (y_i - (m x_i + b)) = 0 \]</p>
+    <p>Rearranging these equations:</p>
+    <p>\[ \sum x_i y_i = m \sum x_i^2 + b \sum x_i \]</p>
+    <p>\[ \sum y_i = m \sum x_i + b n \]</p>
+    <p>Writing these equations in matrix form:</p>
+    <p>\[ \begin{bmatrix} \sum x_i^0 & \sum x_i^1 \\ \sum x_i^1 & \sum x_i^2 \end{bmatrix} \begin{bmatrix} b \\ m \end{bmatrix} = \begin{bmatrix} \sum y_i \ \sum x_i y_i \end{bmatrix} \]</p>
+    <p>Denoting the design matrix as:</p>
+    <p>\[ X = \begin{bmatrix} 1 & x_1 \\ 1 & x_2 \\ \vdots & \vdots \\ 1 & x_n \end{bmatrix} \]</p>
+    <p>The vector of observations as:</p>
+    <p>\[ Y = \begin{bmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{bmatrix} \]</p>
+    <p>The equation can now be rewritten as:</p>
+    <p>\[ X^T X B = X^T Y \]</p>
+    <p>Solving for \( B \):</p>
     <p>\[ B = (X^T X)^{-1} X^T Y \]</p>
     <h3>Example Calculation</h3>
     <p>Given the dataset:</p>
@@ -54,7 +63,41 @@
     <p>Solving for \( B \):</p>
     <p>\[ B = \begin{bmatrix} 1.2 \\ 0.8 \end{bmatrix} \]</p>
     <button onclick="computeOptimalFit()">Find Optimal Fit</button>
-    
+
+    <h3>MATLAB Code for Linear Regression</h3>
+    <p>Copy and paste the following MATLAB script to compute the optimal slope and intercept using the normal equation:</p>
+    <pre>
+<code>
+
+% MATLAB script for Linear Regression using Normal Equation
+
+x = [1; 2; 3];  % Design matrix with bias term
+y = [2; 2.8; 3.7];    % Target values
+
+
+% Create a matrix with a column of ones (for the intercept) and a column of x values
+X = [ones(length(x), 1), x];
+Y = y;
+% Compute (X'X)^(-1)X'Y
+B = (X' * X) \ (X' *  Y);
+
+% Display results
+fprintf('Intercept (b): %.2f\n', B(1));
+fprintf('Slope (m): %.2f\n', B(2));
+
+% Plot the data and regression line
+scatter(X(:,2), Y, 'r', 'filled');
+hold on;
+x_vals = linspace(min(X(:,2)), max(X(:,2)), 100);
+y_vals = B(1) + B(2) * x_vals;
+plot(x_vals, y_vals, 'b-', 'LineWidth', 2);
+xlabel('x'); ylabel('y');
+title('Linear Regression Fit');
+grid on;
+hold off;
+</code>
+    </pre>
+      
     <script>
         const canvas = document.getElementById("plot");
         const ctx = canvas.getContext("2d");
@@ -65,12 +108,12 @@
 
         function generatePoints() {
             points = [];
-            let trueSlope = 1.2;
-            let trueIntercept = 30*Math.random();
+            let trueSlope = 1.2; //*(Math.random());
+            let trueIntercept = 30;
             let noiseAmplitude = 10*Math.random()+10;
             for (let i = 0; i < 50; i++) {
                 let x = i * 10;
-                let noise = noiseAmplitude*(Math.random() - 0.5) * 40; // Adding some noise
+                let noise = noiseAmplitude*(Math.random() - 0.5) * 10; // Adding some noise
                 let y = trueSlope * x + trueIntercept + noise;
                 points.push({ x, y });
             }
